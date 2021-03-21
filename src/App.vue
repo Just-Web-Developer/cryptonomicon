@@ -149,6 +149,14 @@ export default {
     },
     updatePrices(tickerName, price) {
       this.currencies.filter(t => t.name === tickerName).forEach(t => t.price = price)
+      console.log(tickerName)
+      if (this.currentCurrency.name === tickerName){
+        this.currentCurrencyPrices.push(price)
+        if(this.currentCurrencyPrices.length > 72){
+          this.currentCurrencyPrices.shift()
+        }
+      }
+
 
     },
     normalize(index) {
