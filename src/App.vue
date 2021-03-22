@@ -61,7 +61,8 @@
         class="card w-1/6 mb-6 flex border  flex-col items-center py-6 px-3 mx-3"
         :class="{
           ' border-solid border-indigo-800': currentCurrency === currency,
-          'border-dashed': currentCurrency !== currency
+          'border-dashed': currentCurrency !== currency,
+          'bg-red-100': currency.price === '-'
         }"
         v-for="currency in showFilteredCurrencies"
         :key="currency.id"
@@ -119,8 +120,7 @@ export default {
     addCurrency() {
       if (!this.validation) {
         if (this.newCurrency !== null) {
-          this.newCurrency = this.newCurrency.toUpperCase()
-          console.log(this.newCurrency)
+          this.newCurrency = this.newCurrency.toUpperCase();
           const currency = {
             name: this.newCurrency,
             price: "-"
@@ -130,7 +130,9 @@ export default {
             "currencies-list",
             JSON.stringify(this.currencies)
           );
-          subscribeToTicker(currency.name, (newPrice) => this.updatePrices(currency.name, newPrice));
+          subscribeToTicker(currency.name, newPrice =>
+            this.updatePrices(currency.name, newPrice)
+          );
           this.newCurrency = null;
           this.tips = [];
           this.error = "";
@@ -142,22 +144,26 @@ export default {
     deleteCurrency(currency) {
       this.currencies = this.currencies.filter(item => item !== currency);
       localStorage.setItem("currencies-list", JSON.stringify(this.currencies));
-      unsubscribeFromTicker(currency.name)
+      unsubscribeFromTicker(currency.name);
       if (this.currentCurrency === currency) {
         this.currentCurrency = null;
       }
     },
     updatePrices(tickerName, price) {
-      this.currencies.filter(t => t.name === tickerName).forEach(t => t.price = price)
-      console.log(tickerName)
-      if (this.currentCurrency.name === tickerName){
-        this.currentCurrencyPrices.push(price)
-        if(this.currentCurrencyPrices.length > 72){
-          this.currentCurrencyPrices.shift()
+      if (price > 1){
+        price = price.toFixed(2)
+      }else {
+        price = price.toPrecision(4)
+      }
+      this.currencies
+        .filter(t => t.name === tickerName)
+        .forEach(t => (t.price = price));
+      if (this.currentCurrency && this.currentCurrency.name === tickerName) {
+        this.currentCurrencyPrices.push(price);
+        if (this.currentCurrencyPrices.length > 72) {
+          this.currentCurrencyPrices.shift();
         }
       }
-
-
     },
     normalize(index) {
       const max = Math.max(...this.currentCurrencyPrices);
@@ -251,7 +257,9 @@ export default {
     if (currenciesData) {
       this.currencies = JSON.parse(currenciesData);
       this.currencies.forEach(ticker => {
-        subscribeToTicker(ticker.name, (newPrice) => this.updatePrices(ticker.name, newPrice));
+        subscribeToTicker(ticker.name, newPrice =>
+          this.updatePrices(ticker.name, newPrice)
+        );
       });
     }
   }
